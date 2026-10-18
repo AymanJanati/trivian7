@@ -5,7 +5,7 @@ export const RULES_VERSION: Record<GameId, number> = {
   reaction: 1,
   memory: 2,
   aim: 1,
-  trivia: 2,
+  trivia: 3,
 };
 export const MEMORY_LIMIT_MS = 120_000;
 export const MEMORY_LEAD_MS = 600;
@@ -22,11 +22,16 @@ export function memoryPlaybackMs(round: number) {
   return MEMORY_LEAD_MS + config.length * (config.flashMs + config.gapMs);
 }
 export const QUIZ_COUNT = 15;
+export const QUIZ_MIX: Record<Difficulty, number> = {
+  easy: 8,
+  medium: 5,
+  hard: 2,
+};
 export const QUIZ_RULES: Record<
   Difficulty,
   { timeLimitMs: number; maxPoints: number }
 > = {
   easy: { timeLimitMs: 10_000, maxPoints: 40 },
-  medium: { timeLimitMs: 12_000, maxPoints: 65 },
-  hard: { timeLimitMs: 15_000, maxPoints: 95 },
+  medium: { timeLimitMs: 12_000, maxPoints: 80 },
+  hard: { timeLimitMs: 15_000, maxPoints: 140 },
 };

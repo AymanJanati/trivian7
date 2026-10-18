@@ -472,21 +472,14 @@ export function Aim({ onFinish, muted }: Props) {
     </>
   );
 }
-export function Trivia({ session, onFinish, muted }: Props) {
+export function Trivia({ session, onFinish }: Props) {
   const [question, setQuestion] = useState<PublicQuestion | null>(null),
     [remaining, setRemaining] = useState(10000),
-    [feedback, setFeedback] = useState<{
-      correct: boolean;
-      correctOptionId: string;
-      explanation: string;
-    } | null>(null),
-    [chosen, setChosen] = useState<string | null>(null),
     [error, setError] = useState(""),
     [started, setStarted] = useState(false),
     [loading, setLoading] = useState(false);
   const locked = useRef(false),
     deadline = useRef(0),
-    timer = useRef<ReturnType<typeof setTimeout> | null>(null),
     alive = useRef(true),
     pending = useRef<{ id: string; option: string | null } | null>(null);
   const load = useCallback(async () => {
@@ -507,8 +500,6 @@ export function Trivia({ session, onFinish, muted }: Props) {
       deadline.current = performance.now() + q.remainingMs + 30;
       setQuestion(q);
       setRemaining(Math.min(q.timeLimitMs, q.remainingMs));
-      setFeedback(null);
-      setChosen(null);
       locked.current = false;
     } catch (e) {
       if (alive.current) setError((e as Error).message);
@@ -521,55 +512,53 @@ export function Trivia({ session, onFinish, muted }: Props) {
       if (!question || locked.current) return;
       locked.current = true;
       pending.current = { id: question.id, option };
-      setChosen(option);
+      setLoading(true);
       setError("");
       try {
-        const result = await request<{
-          correct: boolean;
-          correctOptionId: string;
-          explanation: string;
-        }>("game/answer", {
-          ...credentials(session),
-          questionId: question.id,
-          optionId: option,
-        });
+        await request<{ accepted: boolean; questionId: string }>(
+          "game/answer",
+          {
+            ...credentials(session),
+            questionId: question.id,
+            optionId: option,
+          },
+        );
         if (!alive.current) return;
         pending.current = null;
-        setFeedback(result);
-        beep(muted, result.correct ? 850 : 200);
-        timer.current = setTimeout(() => void load(), 1100);
+        await load();
       } catch (e) {
         if (alive.current) setError((e as Error).message);
+      } finally {
+        if (alive.current) setLoading(false);
       }
     },
-    [question, session, load, muted],
+    [question, session, load],
   );
   useEffect(() => {
     alive.current = true;
     return () => {
       alive.current = false;
-      if (timer.current) clearTimeout(timer.current);
     };
   }, []);
   useEffect(() => {
-    if (!question || feedback) return;
+    if (!question || loading) return;
     const interval = setInterval(() => {
       const left = Math.max(0, deadline.current - performance.now());
       setRemaining(left);
       if (left === 0 && !locked.current) void answer(null);
     }, 40);
     return () => clearInterval(interval);
-  }, [question, feedback, answer]);
+  }, [question, loading, answer]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (/^[1-4]$/.test(e.key) && !e.repeat && question && !feedback) {
+      if (/^[1-4]$/.test(e.key) && !e.repeat && question && !loading) {
         e.preventDefault();
         void answer(question.options[Number(e.key) - 1].id);
       }
     };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [question, feedback, answer]);
+  }, [question, loading, answer]);
   const retry = () => {
     if (pending.current) {
       const option = pending.current.option;
@@ -628,21 +617,12 @@ export function Trivia({ session, onFinish, muted }: Props) {
                 <button
                   key={o.id}
                   disabled={locked.current || loading}
-                  className={`${feedback?.correctOptionId === o.id ? "correct" : ""} ${feedback && chosen === o.id && !feedback.correct ? "incorrect" : ""}`}
                   onClick={() => void answer(o.id)}
                 >
                   <span>0{i + 1}</span>
                   {o.text}
                 </button>
               ))}
-            </div>
-            <div aria-live="polite" className="quiz-feedback">
-              {feedback && (
-                <>
-                  <b>{feedback.correct ? ui.correct : ui.nope}</b>{" "}
-                  {feedback.explanation}
-                </>
-              )}
             </div>
           </div>
         </>

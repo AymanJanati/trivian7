@@ -1,4 +1,5 @@
 # N7GEEKS // ARCADE
+> **Latest Geek Check edit (2026-10-18):** Format 3 uses 8 easy, 5 medium and 2 hard questions, including five guaranteed original entry questions. After each answer, advance immediately without showing or returning correctness, correct answers or explanations. Only the final score is public. See README.md and `src/lib/rules.ts` for current rules; this supersedes the older quiz feedback and difficulty instructions below.
 > **Difficulty update (user request, 2026-10-18):** The original Memory and Geek Check rules below are superseded by the current format documented in README.md and `src/lib/rules.ts`. Memory now uses 10 fresh independent sequences (3–12 tiles) with accelerating playback and input deadlines. Geek Check now uses 15 progressively harder questions from a 90-question bank, with difficulty-weighted scoring. Reaction and Aim rules remain unchanged. Prior Memory/Trivia scores are retained separately as format 1, rather than mixed with format 2 rankings.
 ## Full-stack Next.js + Vercel | Codex-ready implementation specification (v2)
 

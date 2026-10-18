@@ -42,10 +42,10 @@ export const games = {
     label: "KNOWLEDGE",
     jp: "知識",
     number: "04",
-    description: "15 questions. Easy to start. Hard to master.",
+    description: "Entry-level wins. A few brain-benders. All geeks welcome.",
     duration: "~2 MIN",
     instruction:
-      "15 tech questions. Difficulty ramps from easy to hard. Harder answers earn more; accuracy matters most, speed adds a bonus.",
+      "15 tech questions: 8 easy, 5 medium, 2 hard. Choose an answer to move straight on. Your total score is revealed at the end.",
     control: "KEYS 1–4 / TAP",
     symbol: "{ }",
   },

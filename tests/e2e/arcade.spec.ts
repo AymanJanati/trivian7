@@ -170,7 +170,7 @@ test("aim supports twenty pointer targets and bounded mobile target positions", 
     page.getByText("YOU MADE THE BOARD.", { exact: true }),
   ).toBeVisible();
 });
-test("quiz API hides answers, keyboard choices get feedback and all fifteen questions save", async ({
+test("quiz API hides answers, keyboard choices advance without feedback and all fifteen questions save", async ({
   page,
   request,
 }) => {
@@ -188,7 +188,7 @@ test("quiz API hides answers, keyboard choices get feedback and all fifteen ques
     expect(question.explanation).toBeUndefined();
     expect(question.total).toBe(15);
     expect(question.difficulty).toBe(
-      i < 5 ? "easy" : i < 10 ? "medium" : "hard",
+      i < 8 ? "easy" : i < 13 ? "medium" : "hard",
     );
     const next =
       i < 14
@@ -198,10 +198,17 @@ test("quiz API hides answers, keyboard choices get feedback and all fifteen ques
       page.getByRole("heading", { name: question.prompt, exact: true }),
     ).toBeVisible();
     await page.waitForTimeout(150);
-    await page.keyboard.press("1");
-    await expect(page.locator(".quiz-feedback")).toContainText(
-      /CORRECT!|NOPE./,
+    const answered = page.waitForResponse((r) =>
+      r.url().endsWith("/api/game/answer"),
     );
+    await page.keyboard.press("1");
+    expect(await (await answered).json()).toEqual({
+      accepted: true,
+      questionId: question.id,
+    });
+    await expect(
+      page.locator(".quiz-feedback, .answers .correct, .answers .incorrect"),
+    ).toHaveCount(0);
     if (next) response = await next;
   }
   await expect(

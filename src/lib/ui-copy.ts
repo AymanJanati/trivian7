@@ -131,7 +131,7 @@ export const ui = {
   startTargets: "START TARGETS ↗",
   nerdCheck: "NERD CHECK.",
   fiveTopicsFiveQuestionsTenSecondsEach:
-    "15 questions. Five topics. Easy → medium → hard. Accuracy earns most; speed adds a bonus.",
+    "15 questions. 8 easy, 5 medium, 2 hard. All skill levels welcome. Only your final score is revealed.",
   startQuiz: "START QUIZ ↗",
   question: "QUESTION ",
   correct: "CORRECT!",

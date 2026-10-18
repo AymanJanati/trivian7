@@ -177,4 +177,55 @@ describe("actual gameplay controls", () => {
     );
     expect(screen.getByRole("button", { name: "RETRY" })).toBeTruthy();
   });
+  it("moves straight to the next question without revealing grades or waiting for a timer", async () => {
+    const q = {
+      id: "L01",
+      category: "linux",
+      difficulty: "easy",
+      prompt: "First entry question?",
+      options: [0, 1, 2, 3].map((i) => ({
+        id: String(i),
+        text: `Option ${i}`,
+      })),
+      timeLimitMs: 10000,
+      remainingMs: 10000,
+      openedAt: 0,
+      deadline: 10000,
+      index: 0,
+      total: 15,
+      maxPoints: 40,
+    };
+    vi.mocked(request)
+      .mockReset()
+      .mockResolvedValueOnce(q)
+      .mockResolvedValueOnce({ accepted: true, questionId: q.id })
+      .mockResolvedValueOnce({
+        ...q,
+        id: "P01",
+        index: 1,
+        prompt: "Next entry question?",
+      });
+    render(
+      <Trivia
+        session={{ ...session, gameId: "trivia" }}
+        onFinish={vi.fn()}
+        muted={false}
+      />,
+    );
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: /START QUIZ/ })),
+    );
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: /Option 0/ })),
+    );
+    expect(
+      screen.getByRole("heading", { name: "Next entry question?" }),
+    ).toBeTruthy();
+    expect(screen.queryByText(/CORRECT!|NOPE\./)).toBeNull();
+    expect(
+      document.querySelector(
+        ".quiz-feedback, .answers .correct, .answers .incorrect",
+      ),
+    ).toBeNull();
+  });
 });

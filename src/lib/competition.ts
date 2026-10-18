@@ -161,14 +161,9 @@ export async function answerQuestion(
     const index = data.questions!.findIndex((q) => q.id === questionId),
       q = data.questions![index];
     if (!q) throw new ApiError(400, "Unknown question.");
-    // Repeated answers return their original feedback without changing timing or choice.
+    // Acknowledge retries without revealing grades or changing the locked answer.
     if (index < data.answers!.length) {
-      const a = data.answers![index];
-      return {
-        correct: a.correct,
-        correctOptionId: q.correctOptionId,
-        explanation: q.explanation,
-      };
+      return { accepted: true, questionId };
     }
     if (
       session.state !== "started" ||
@@ -191,13 +186,9 @@ export async function answerQuestion(
       optionId,
     });
     delete data.questionOpenedAt;
-    data.questionReadyAt = Date.now() + 650;
+    data.questionReadyAt = Date.now();
     await repo.saveSession(session);
-    return {
-      correct,
-      correctOptionId: q.correctOptionId,
-      explanation: q.explanation,
-    };
+    return { accepted: true, questionId };
   });
 }
 export async function finishGame(

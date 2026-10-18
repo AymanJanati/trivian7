@@ -379,14 +379,28 @@ export function shuffle<T>(items: readonly T[]): T[] {
   return out;
 }
 export function chooseQuestions() {
-  // Each tier visits all five topics, making every run equally weighted.
-  return (["easy", "medium", "hard"] as Difficulty[]).flatMap((difficulty) =>
-    shuffle(categories).map((category) => {
-      const pool = questions.filter(
-        (q) => q.category === category && q.difficulty === difficulty,
-      );
-      const question = pool[randomInt(pool.length)];
-      return { ...question, options: shuffle(question.options) };
-    }),
-  );
+  const selected: Question[] = [];
+  function pick(
+    category: Question["category"],
+    difficulty: Difficulty,
+    originalEntry = false,
+  ) {
+    const pool = questions.filter(
+      (q) =>
+        q.category === category &&
+        q.difficulty === difficulty &&
+        !selected.some((chosen) => chosen.id === q.id) &&
+        (!originalEntry || Number(q.id.slice(1)) <= 4),
+    );
+    const question = pool[randomInt(pool.length)];
+    selected.push({ ...question, options: shuffle(question.options) });
+  }
+  // Everyone gets five genuinely approachable questions from the original bank.
+  for (const category of shuffle(categories)) pick(category, "easy", true);
+  const bonusCategories = shuffle(categories);
+  for (const category of bonusCategories.slice(0, 3)) pick(category, "easy");
+  for (const category of shuffle(categories)) pick(category, "medium");
+  for (const category of bonusCategories.slice(3)) pick(category, "hard");
+  // Exactly three questions per topic, with the same 8/5/2 difficulty mix each run.
+  return selected;
 }

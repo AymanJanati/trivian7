@@ -5,6 +5,7 @@ import {
   MEMORY_TRANSITION_MS,
   memoryPlaybackMs,
   QUIZ_COUNT,
+  QUIZ_MIX,
   QUIZ_RULES,
   type Difficulty,
 } from "./rules";
@@ -111,7 +112,9 @@ export function triviaScore(
     throw new Error("Complete all fifteen questions.");
   if (
     ["easy", "medium", "hard"].some(
-      (d) => difficulties.filter((value) => value === d).length !== 5,
+      (d) =>
+        difficulties.filter((value) => value === d).length !==
+        QUIZ_MIX[d as Difficulty],
     )
   )
     throw new Error("Invalid quiz difficulty mix.");

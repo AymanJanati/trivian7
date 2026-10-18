@@ -32,9 +32,9 @@ const memoryChallenges = MEMORY_ROUNDS.map((round, r) =>
   Array.from({ length: round.length }, (_, i) => (i + r) % 9),
 );
 const difficultyMix: Difficulty[] = [
-  ...Array(5).fill("easy"),
+  ...Array(8).fill("easy"),
   ...Array(5).fill("medium"),
-  ...Array(5).fill("hard"),
+  ...Array(2).fill("hard"),
 ];
 const finishReaction = (s: GameSession, ms = 300) =>
   finishGame(s.gameId, s.id, s.token, { trials: [ms, ms, ms, ms, ms] });
@@ -231,10 +231,10 @@ describe("exact scoring", () => {
     ).toBe(0);
     expect(
       triviaScore(
-        answers.map((a, i) => ({ ...a, correct: i >= 10 })),
+        answers.map((a, i) => ({ ...a, correct: i >= 13 })),
         difficultyMix,
       ).score,
-    ).toBe(475);
+    ).toBe(280);
     expect(() =>
       triviaScore(answers.slice(0, 5), difficultyMix.slice(0, 5)),
     ).toThrow();
@@ -399,12 +399,24 @@ describe("server-only trivia protocol", () => {
       expect(selection).toHaveLength(15);
       expect(new Set(selection.map((q) => q.id)).size).toBe(15);
       expect(selection.map((q) => q.difficulty)).toEqual(difficultyMix);
-      for (let tier = 0; tier < 3; tier++)
-        expect(
-          new Set(
-            selection.slice(tier * 5, tier * 5 + 5).map((q) => q.category),
-          ).size,
-        ).toBe(5);
+      expect(
+        selection
+          .slice(0, 5)
+          .every((q) => Number(q.id.slice(1)) <= 4 && q.difficulty === "easy"),
+      ).toBe(true);
+      expect(new Set(selection.slice(8, 13).map((q) => q.category)).size).toBe(
+        5,
+      );
+      for (const category of [
+        "linux",
+        "python",
+        "cybersecurity",
+        "data-ai",
+        "dev-web",
+      ])
+        expect(selection.filter((q) => q.category === category)).toHaveLength(
+          3,
+        );
     }
   });
   it("hides keys, grades server-side, locks answers and counts timeouts", async () => {
@@ -425,7 +437,10 @@ describe("server-only trivia protocol", () => {
         q.id,
         actual.correctOptionId,
       );
-      expect(a.correct).toBe(i !== 14);
+      expect(a).toEqual({ accepted: true, questionId: q.id });
+      expect(a).not.toHaveProperty("correct");
+      expect(a).not.toHaveProperty("correctOptionId");
+      expect(a).not.toHaveProperty("explanation");
       expect(
         await answerQuestion(
           "trivia",
@@ -435,10 +450,9 @@ describe("server-only trivia protocol", () => {
           q.options.find((o) => o.id !== actual.correctOptionId)!.id,
         ),
       ).toEqual(a);
-      vi.advanceTimersByTime(700);
     }
     const result = await finishGame("trivia", s.id, s.token, { score: 9999 });
-    expect(result.score).toBe(891);
+    expect(result.score).toBe(845);
   });
 });
 describe("organizer security and production safety", () => {
