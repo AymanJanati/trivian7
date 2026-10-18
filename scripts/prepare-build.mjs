@@ -34,8 +34,17 @@ const { Pool, neonConfig } = await import("@neondatabase/serverless");
 neonConfig.webSocketConstructor = (await import("ws")).default;
 const { drizzle } = await import("drizzle-orm/neon-serverless");
 const { migrate } = await import("drizzle-orm/neon-serverless/migrator");
+// Session-scoped migration locks require a direct connection, not PgBouncer.
+const migrationUrl =
+  process.env.DATABASE_URL_UNPOOLED ||
+  process.env.POSTGRES_URL_NON_POOLING ||
+  process.env.DATABASE_URL;
+if (new URL(migrationUrl).hostname.includes("-pooler."))
+  throw new Error(
+    "Migrations need DATABASE_URL_UNPOOLED (the direct Neon URL), injected by the Vercel Neon integration. Keep DATABASE_URL pooled for runtime queries.",
+  );
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: migrationUrl,
   connectionTimeoutMillis: 15000,
 });
 const client = await pool.connect();

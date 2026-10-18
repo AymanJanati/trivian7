@@ -44,24 +44,23 @@ Vitest covers the four exact scoring algorithms, nickname normalization, indepen
 
 ## Production: GitHub → Vercel → Neon
 
-Source repository: [cyphxdev/n7geeks-arcade](https://github.com/cyphxdev/n7geeks-arcade) (private). Hosting/database credentials are never included in Git. The following steps use your own accounts and secrets.
+Source repository: [AymanJanati/trivian7](https://github.com/AymanJanati/trivian7). Hosting/database credentials are never included in Git. The following steps use your own accounts and secrets.
 
 1. Publish this complete repository to an actual GitHub repository. Commit the lockfile and `drizzle/` migrations. Do not commit `.env.local`.
 2. Import that GitHub repository through **Vercel → Add New Project**, with Next.js and the repository root selected. Keep `npm run build` as the build command.
 3. Add [Neon through Vercel Marketplace](https://vercel.com/marketplace/neon), attach it to this project, choose a nearby region and approve the plan. Check the injected environment variables. Map the integration's PostgreSQL connection string to the server-only **`DATABASE_URL`** if it is named differently. Use the Neon URL, including its required TLS options.
+   Keep the integration's **`DATABASE_URL_UNPOOLED`** variable too: migrations use this direct connection so the migration lock stays on the same database session. Runtime queries continue to use pooled `DATABASE_URL`.
 4. Set **`ADMIN_PASSWORD`** to a unique password of at least 12 characters and **`SESSION_SIGNING_SECRET`** to a cryptographically random value of at least 32 characters. Generate the latter with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` and save it privately. These values never use a `NEXT_PUBLIC_` prefix.
 5. Unset `DEMO_MODE` or set it to `false` on Vercel. Demo mode is refused on **all** Vercel deployments. Confirm that you selected the intended production database.
 6. Deploy or redeploy once Neon and secrets are attached. The build validates configuration, acquires a database advisory migration lock and applies the committed Drizzle migrations automatically **before** `next build`. No SQL editor or separate backend deployment is required. Failed configuration/migrations stop the build.
 7. Open `/api/health` on the deployed URL. It must return `ok: true`, `mode: "live"`, `database: "neon"`. Verify that the public UI says live and that `/admin` accepts the production password.
 8. Play on a laptop and a phone. Reuse the same tag in different games; confirm no cross-game conflict. Replay a tag in the same game and confirm the returning-player choice. Refresh the other device and verify scores persist across refresh, cold starts and redeployment.
 
-The button below opens Vercel's import flow for this private repository. Sign in with the authorized GitHub account and select `cyphxdev/n7geeks-arcade`. To regenerate it, run `npm run deploy:button -- --private`. If the repository is later made public, `npm run deploy:button` generates the documented [public template clone button](https://vercel.com/docs/deploy-button). The script refuses missing/non-GitHub remotes. A button begins account authorization and project setup; it cannot bypass Neon approval or secret entry.
+The button below opens Vercel's setup flow for [AymanJanati/trivian7](https://github.com/AymanJanati/trivian7). Run `npm run deploy:button` to regenerate the documented [public template clone button](https://vercel.com/docs/deploy-button). To deploy directly from this repository with future pushes, use **Vercel → Add New Project → Import Git Repository** and select `AymanJanati/trivian7`. The script refuses missing/non-GitHub remotes. A button begins account authorization and project setup; it cannot bypass Neon approval or secret entry.
 
 <!-- deploy-button:start -->
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
-
-Private repository: sign in and import [cyphxdev/n7geeks-arcade](https://github.com/cyphxdev/n7geeks-arcade).
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FAymanJanati%2Ftrivian7&env=ADMIN_PASSWORD,SESSION_SIGNING_SECRET)
 <!-- deploy-button:end -->
 
 ## Real local database and previews
@@ -134,6 +133,6 @@ API paths: `GET /api/health`, `GET /api/leaderboard?gameId=…`, `POST /api/nick
 
 ## Verification boundary
 
-Verified locally on 2026-10-18: `npm run typecheck`, `npm run lint`, all **38 Vitest tests**, all **7 Playwright scenarios**, and `npm run build` passed. The compiled app also passed a local production-server smoke check for health, starting a game and quitting it. Browser checks included all four games, the complete fifteen-question quiz, and the three specified viewport sizes. The supplied SVG matches the original file unchanged, and the private trivia bank was absent from the browser's static chunks.
+Verified locally on 2026-10-18: `npm run typecheck`, `npm run lint`, all **39 Vitest tests**, all **7 Playwright scenarios**, and `npm run build` passed. The compiled app also passed a local production-server smoke check for health, starting a game and quitting it. Browser checks included all four games, the complete fifteen-question quiz, and the three specified viewport sizes. The supplied SVG matches the original file unchanged, and the private trivia bank was absent from the browser's static chunks.
 
 Local automated checks and browser verification can validate this repository and demo flows. Live Neon provisioning, live migration execution, persistence across Vercel cold starts/redeployments, a real GitHub deploy button and two-device production acceptance require the real external accounts/database. These are not represented as completed by local tests.
