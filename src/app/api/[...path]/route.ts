@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { createHash } from "node:crypto";
-import { GAME_IDS } from "@/lib/games";
+import { ACTIVE_GAME_IDS, GAME_IDS } from "@/lib/games";
 import { nameSchema } from "@/lib/nickname";
 import { ConfigurationError, environment } from "@/lib/env";
 import { transaction, rateLimit } from "@/db/store";
@@ -23,8 +23,9 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const gameSchema = z.enum(GAME_IDS);
+const activeGameSchema = z.enum(ACTIVE_GAME_IDS);
 const sessionSchema = z.object({
-  gameId: gameSchema,
+  gameId: activeGameSchema,
   sessionId: z.uuid(),
   token: z.string().regex(/^[a-f0-9]{64}$/),
 });
@@ -83,7 +84,9 @@ async function handler(
       });
     }
     if (path === "leaderboard" && req.method === "GET") {
-      const game = gameSchema.parse(req.nextUrl.searchParams.get("gameId"));
+      const game = activeGameSchema.parse(
+        req.nextUrl.searchParams.get("gameId"),
+      );
       const rows = await transaction(game, async (repo) =>
         ranked(await repo.board()),
       );
@@ -101,7 +104,9 @@ async function handler(
       });
     }
     if (path === "nickname/check" && req.method === "POST") {
-      const b = z.object({ gameId: gameSchema, name: nameSchema }).parse(body);
+      const b = z
+        .object({ gameId: activeGameSchema, name: nameSchema })
+        .parse(body);
       const entry = await transaction(b.gameId, (repo) =>
         repo.entry(b.name.normalizedName),
       );
@@ -113,7 +118,7 @@ async function handler(
     if (path === "game/start" && req.method === "POST") {
       const b = z
         .object({
-          gameId: gameSchema,
+          gameId: activeGameSchema,
           name: nameSchema,
           returning: z.boolean().default(false),
         })

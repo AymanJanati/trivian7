@@ -3,7 +3,7 @@ import { ui, dynamicCopy } from "@/lib/ui-copy";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Download, Loader2 } from "lucide-react";
-import { GAME_IDS, games, type Entry, type GameId } from "@/lib/games";
+import { ACTIVE_GAME_IDS, games, type Entry, type GameId } from "@/lib/games";
 import { request, RequestError } from "@/lib/client";
 export default function Admin() {
   const [authenticated, setAuthenticated] = useState(false),
@@ -136,7 +136,7 @@ export default function Admin() {
           </div>
           <div className="admin-toolbar">
             <div className="admin-tabs">
-              {GAME_IDS.map((id) => (
+              {ACTIVE_GAME_IDS.map((id) => (
                 <button
                   key={id}
                   aria-pressed={id === game}
@@ -164,7 +164,7 @@ export default function Admin() {
               />{" "}
               {ui.exportBoards}
             </span>
-            {GAME_IDS.map((id) => (
+            {ACTIVE_GAME_IDS.map((id) => (
               <a key={id} href={`/api/admin/export?gameId=${id}`}>
                 {games[id].name}
                 {ui.csv}

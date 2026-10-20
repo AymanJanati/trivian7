@@ -15,7 +15,8 @@ import {
 } from "lucide-react";
 import {
   games,
-  GAME_IDS,
+  ACTIVE_GAME_IDS,
+  isActiveGame,
   copy,
   type Entry,
   type GameId,
@@ -24,7 +25,7 @@ import {
 } from "@/lib/games";
 import { credentials, request, RequestError } from "@/lib/client";
 import { normalizeName } from "@/lib/nickname";
-import { Reaction, Memory, Aim, Trivia } from "./games";
+import { Reaction, Memory, Aim } from "./games";
 type Pending = { session: GameSession; data: unknown };
 const PENDING = "n7arcade:pending";
 function Preview({ game }: { game: GameId }) {
@@ -72,16 +73,7 @@ function Preview({ game }: { game: GameId }) {
         <span className="tiny-target">+</span>
       </div>
     );
-  return (
-    <div className="card-preview trivia-preview">
-      <b className="code-art">{"{ ? }"}</b>
-      <div className="quiz-sticker">
-        {ui.certified}
-        <br />
-        <b>{ui.geek}</b>
-      </div>
-    </div>
-  );
+  return null;
 }
 function TagDialog({
   game,
@@ -305,6 +297,10 @@ export default function Arcade({
       const saved = localStorage.getItem(PENDING);
       if (saved) {
         const value = JSON.parse(saved) as Pending;
+        if (value.session && !isActiveGame(value.session.gameId)) {
+          localStorage.removeItem(PENDING);
+          return;
+        }
         if (value.session?.id && value.session.token) {
           pending.current = value;
           setSelected(value.session.gameId);
@@ -394,11 +390,10 @@ export default function Arcade({
     setScreen("game");
     setSelected(value.gameId);
   };
-  const Game = session
-    ? { reaction: Reaction, memory: Memory, aim: Aim, trivia: Trivia }[
-        session.gameId
-      ]
-    : null;
+  const Game =
+    session && isActiveGame(session.gameId)
+      ? { reaction: Reaction, memory: Memory, aim: Aim }[session.gameId]
+      : null;
   return (
     <div className="site-shell">
       <header className="masthead">
@@ -486,12 +481,12 @@ export default function Arcade({
             <div className="challenges">
               <div className="section-heading">
                 <h2>
-                  <span>01—04</span> {ui.chooseYourChallenge}
+                  <span>01—03</span> {ui.chooseYourChallenge}
                 </h2>
                 <span>{ui.oneGameOneBoard}</span>
               </div>
               <div className="game-cards">
-                {GAME_IDS.map((id) => (
+                {ACTIVE_GAME_IDS.map((id) => (
                   <article
                     key={id}
                     className={`game-card ${id} ${selected === id ? "selected" : ""}`}
@@ -561,7 +556,7 @@ export default function Arcade({
                 role="tablist"
                 aria-label={ui.chooseLeaderboard}
               >
-                {GAME_IDS.map((id) => (
+                {ACTIVE_GAME_IDS.map((id) => (
                   <button
                     role="tab"
                     aria-selected={selected === id}
@@ -808,7 +803,7 @@ export default function Arcade({
           © {new Date().getFullYear()} {ui.n7geeks2}
           <span className="footer-blue">{"//"}</span> {ui.madeOfCuriosity}
         </span>
-        <span>{ui.fourChallengesFourIndependentBoards}</span>
+        <span>{ui.threeChallengesThreeIndependentBoards}</span>
         <a href="/admin">
           {ui.organizerAccess}
           <ArrowUpRight size={12} />

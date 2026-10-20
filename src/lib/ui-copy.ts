@@ -90,8 +90,8 @@ export const ui = {
   boardIn4Seconds: " board in 4 seconds.",
   n7geeks2: " N7GEEKS ",
   madeOfCuriosity: " MADE OF CURIOSITY.",
-  fourChallengesFourIndependentBoards:
-    "FOUR CHALLENGES. FOUR INDEPENDENT BOARDS.",
+  threeChallengesThreeIndependentBoards:
+    "THREE CHALLENGES. THREE INDEPENDENT BOARDS.",
   organizerAccess: "ORGANIZER ACCESS ",
   endThisRun: "END THIS RUN?",
   callItADay: "CALL IT A DAY?",

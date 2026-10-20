@@ -39,7 +39,7 @@ async function begin(page: Page, game: string, name: string) {
   await page.getByLabel("YOUR NICKNAME").fill(name);
   await page.getByRole("button", { name: "LET’S PLAY" }).click();
 }
-test("responsive arcade has four games, no overflow and usable primary actions", async ({
+test("responsive arcade has three games, no overflow and usable primary actions", async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -52,7 +52,7 @@ test("responsive arcade has four games, no overflow and usable primary actions",
     await page.setViewportSize(size);
     await page.goto("/");
     await expect(page.getByText("DEMO MODE — SCORES NOT SHARED")).toBeVisible();
-    await expect(page.locator(".game-card")).toHaveCount(4);
+    await expect(page.locator(".game-card")).toHaveCount(3);
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -170,51 +170,77 @@ test("aim supports twenty pointer targets and bounded mobile target positions", 
     page.getByText("YOU MADE THE BOARD.", { exact: true }),
   ).toBeVisible();
 });
-test("quiz API hides answers, keyboard choices advance without feedback and all fifteen questions save", async ({
+test("retired Geek Check is absent and cannot be played through old URLs or APIs", async ({
   page,
   request,
 }) => {
-  await reset(request, "trivia");
   await page.goto("/");
-  await begin(page, "GEEK.CHECK", "QuizNova");
-  const questionResponse = page.waitForResponse((r) =>
-    r.url().endsWith("/api/game/question"),
+  await expect(page.getByText("GEEK.CHECK", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("tab")).toHaveCount(3);
+  const retiredPage = await page.goto("/play/trivia");
+  expect(retiredPage!.status()).toBe(404);
+  expect(
+    (
+      await post(request, "game/start", { gameId: "trivia", name: "QuizNova" })
+    ).status(),
+  ).toBe(400);
+  expect(
+    (
+      await post(request, "nickname/check", {
+        gameId: "trivia",
+        name: "QuizNova",
+      })
+    ).status(),
+  ).toBe(400);
+  expect((await request.get("/api/leaderboard?gameId=trivia")).status()).toBe(
+    400,
   );
-  await page.getByRole("button", { name: "START QUIZ" }).click();
-  let response = await questionResponse;
-  for (let i = 0; i < 15; i++) {
-    const question = await response.json();
-    expect(question.correctOptionId).toBeUndefined();
-    expect(question.explanation).toBeUndefined();
-    expect(question.total).toBe(15);
-    expect(question.difficulty).toBe(
-      i < 8 ? "easy" : i < 13 ? "medium" : "hard",
-    );
-    const next =
-      i < 14
-        ? page.waitForResponse((r) => r.url().endsWith("/api/game/question"))
-        : null;
-    await expect(
-      page.getByRole("heading", { name: question.prompt, exact: true }),
-    ).toBeVisible();
-    await page.waitForTimeout(150);
-    const answered = page.waitForResponse((r) =>
-      r.url().endsWith("/api/game/answer"),
-    );
-    await page.keyboard.press("1");
-    expect(await (await answered).json()).toEqual({
-      accepted: true,
-      questionId: question.id,
-    });
-    await expect(
-      page.locator(".quiz-feedback, .answers .correct, .answers .incorrect"),
-    ).toHaveCount(0);
-    if (next) response = await next;
+  for (const path of [
+    "game/question",
+    "game/answer",
+    "game/finish",
+    "game/abandon",
+  ]) {
+    expect(
+      (
+        await post(request, path, {
+          gameId: "trivia",
+          sessionId: "12345678-1234-4234-8234-123456789abc",
+          token: "a".repeat(64),
+        })
+      ).status(),
+    ).toBe(400);
   }
-  await expect(
-    page.getByText("YOU MADE THE BOARD.", { exact: true }),
-  ).toBeVisible();
 });
+
+test("a pending retired quiz does not trap returning visitors in the save screen", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.evaluate(() =>
+    localStorage.setItem(
+      "n7arcade:pending",
+      JSON.stringify({
+        session: {
+          id: "old-quiz",
+          token: "a".repeat(64),
+          gameId: "trivia",
+          displayName: "QuizNova",
+        },
+        data: {},
+      }),
+    ),
+  );
+  await page.reload();
+  await expect(page.locator(".game-card")).toHaveCount(3);
+  await expect(
+    page.getByRole("button", { name: /COULD NOT SAVE/ }),
+  ).toHaveCount(0);
+  expect(
+    await page.evaluate(() => localStorage.getItem("n7arcade:pending")),
+  ).toBeNull();
+});
+
 test("failed finish retains a retry across refresh and never reports saved early", async ({
   page,
   request,
@@ -270,10 +296,10 @@ test("admin authorization, CSRF origin checks and game-specific reset", async ({
     .fill("local-arcade-demo");
   await page.getByRole("button", { name: "SIGN IN" }).click();
   await expect(page.getByText("DEMO MODE — SCORES NOT SHARED")).toBeVisible();
-  await page.getByRole("button", { name: "GEEK.CHECK", exact: true }).click();
-  await page.getByLabel("Reset confirmation phrase").fill("RESET TRIVIA");
+  await page.getByRole("button", { name: "AIM//TRAINER", exact: true }).click();
+  await page.getByLabel("Reset confirmation phrase").fill("RESET AIM");
   await page.getByRole("button", { name: "RESET THIS GAME" }).click();
   await expect(
-    page.getByText("GEEK.CHECK board, attempts and sessions reset."),
+    page.getByText("AIM//TRAINER board, attempts and sessions reset."),
   ).toBeVisible();
 });

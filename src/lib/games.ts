@@ -1,5 +1,11 @@
 export const GAME_IDS = ["reaction", "memory", "aim", "trivia"] as const;
 export type GameId = (typeof GAME_IDS)[number];
+// Keep historical IDs for stored results and organizer exports.
+export const ACTIVE_GAME_IDS = ["reaction", "memory", "aim"] as const;
+export type ActiveGameId = (typeof ACTIVE_GAME_IDS)[number];
+export function isActiveGame(value: string): value is ActiveGameId {
+  return ACTIVE_GAME_IDS.some((id) => id === value);
+}
 export const games = {
   reaction: {
     name: "REACTION.EXE",
@@ -97,7 +103,7 @@ export interface GameSession {
 export const copy = {
   title: "PICK A CHALLENGE.",
   titleAccent: "OWN THE BOARD.",
-  tagline: "Four ways to show up. One chance to stand out.",
+  tagline: "Three ways to show up. One chance to stand out.",
   emptyBoard: "NO SCORES YET. BE THE FIRST.",
   tagTitle: "ENTER YOUR TAG",
   existingTitle: "TAG ALREADY ON THIS BOARD",

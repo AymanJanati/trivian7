@@ -1,6 +1,6 @@
 # N7GEEKS // ARCADE
 
-Four independent competitions, one full-stack Next.js application. Pick **REACTION.EXE**, **MEMORY.STACK**, **AIM//TRAINER** or **GEEK.CHECK**. Each game has its own nickname namespace, personal best and leaderboard. There is no aggregate score.
+Three independent competitions, one full-stack Next.js application. Pick **REACTION.EXE**, **MEMORY.STACK**, or **AIM//TRAINER**. Each game has its own nickname namespace, personal best and leaderboard. There is no aggregate score.
 
 Built with Next.js App Router, React, TypeScript, Tailwind, original CSS/SVG graphics, the supplied N7Geeks logo, Drizzle and Neon PostgreSQL. All `/api` endpoints deploy alongside the UI in one Vercel project. Fonts are packaged locally; gameplay needs no external trivia, image or AI service.
 
@@ -38,7 +38,7 @@ npm run test:e2e
 npm run build
 ```
 
-Playwright covers desktop (1366×768 and 1920×1080), mobile (375×812), the tag dialog and focus, all four games, keyboard/pointer input, automatic result return, retries across refresh, admin access and cross-site request rejection. `PLAYWRIGHT_EXECUTABLE_PATH` can point to an existing compatible Chromium executable. Browser artifacts and screenshots are written to ignored `test-results/`.
+Playwright covers desktop (1366×768 and 1920×1080), mobile (375×812), the tag dialog and focus, all three games, retired-game URL/API rejection, keyboard/pointer input, automatic result return, retries across refresh, admin access and cross-site request rejection. `PLAYWRIGHT_EXECUTABLE_PATH` can point to an existing compatible Chromium executable. Browser artifacts and screenshots are written to ignored `test-results/`.
 
 Vitest covers the four exact scoring algorithms, nickname normalization, independent namespaces, collisions/retries, concurrent idempotent finishes, best-score preservation, reset isolation, server quiz grading, cookie signing/expiry and production configuration safeguards. Those repository tests use the local in-memory transaction implementation. They do **not** establish that cloud credentials, Neon connectivity or an actual deployment work.
 
@@ -90,11 +90,11 @@ Ranks sort by score descending, tie-break ascending, achieved timestamp ascendin
 
 ## Timing, identity and interruption rules
 
+Geek Check was retired on 2026-10-20. It is absent from the arcade and organizer tabs, and public play URLs and APIs reject it. Historical database records and internal grading code remain intact; no data migration or reset is needed. Organizer API exports remain available for historical data. Pending unsaved quiz runs in browser storage are discarded so returning visitors can play the remaining games.
+
 - **Memory (format 2):** ten independent sequences of 3–12 tiles. Each round gets a fresh pattern, never the previous opening or an immediate repeated tile. Flashes accelerate from 450 ms to 180 ms, with gaps narrowing from 160 ms to 97 ms. Input windows last at least six seconds (1.8 seconds per tile for longer rounds), with a visible input countdown and a two-minute overall ceiling. Completed-round awards are **30, 40, 50, 60, 80, 100, 120, 140, 170, 210**, totaling 1,000. A wrong tile or expired window ends the run; partial rounds earn nothing.
-- **Geek Check (format 3):** fifteen questions from a 90-question bank, retaining the original 30 and adding 60. Each run has **8 easy, 5 medium and 2 hard questions**, with three questions per topic. The first five are guaranteed entry-level questions from the original bank. Easy questions allow 10 seconds and up to 40 points; medium allow 12 seconds and up to 80 points; hard allow 15 seconds and up to 140 points. A correct answer earns `round(maxPoints × (0.8 + 0.2 × remainingFraction))`; wrong or expired answers earn zero. Accuracy carries most of the score. The maximum remains 1,000. Submitting an answer immediately advances to the next question, with no correctness text, answer highlights, reveal pause, explanations or correctness sounds. Only the final total is shown.
 - Rules are centralized in `src/lib/rules.ts`. Memory uses version 2, Trivia uses version 3, and Reaction and Aim remain version 1. The non-destructive second migration retains earlier scores and separates boards by format. Older records remain in the database, excluded from current rankings, nickname checks and admin resets/exports. Trivia's new mix starts a separate board without deleting format-2 records. Reload any page already mid-run before the update; old-format pending runs cannot enter the new board.
-- Reaction supports Space/Enter and pointer input. False starts, timeouts and times under 100 ms score zero. Memory supports keys 1–9; Trivia supports keys 1–4. Aim targets remain within the field and have at least 52 CSS-pixel hit areas on mobile.
-- Trivia randomizes topic order within each difficulty tier and randomizes all answer options. Answer keys stay in `src/lib/trivia/questions.server.ts` and `src/lib/trivia/advanced.server.ts`. A question is opened and timed on the server. Answers are locked and graded there. Both question and answer responses omit correctness, answer keys and explanations; answer retries return the same acknowledgment without altering the locked choice.
+- Reaction supports Space/Enter and pointer input. False starts, timeouts and times under 100 ms score zero. Memory supports keys 1–9. Aim targets remain within the field and have at least 52 CSS-pixel hit areas on mobile.
 - Other game events are shape/range/order checked and scores are recomputed server-side. Memory verifies the server-generated sequence and replay timing. Browser reaction/aim/memory events remain forgeable by a determined user. This is a casual booth competition, not a cheat-proof tournament. Identical stand hardware improves fairness.
 - Returning players claim their tag on trust; **YES, THAT'S ME does not authenticate ownership**. Unicode NFKC normalization, whitespace collapse and case normalization apply within one game. Names support Unicode letters/marks/numbers, spaces, underscores and hyphens.
 - Sessions expire after five minutes. Quitting requires confirmation and submits no score. Timers keep running in the quit dialog. **Hiding the tab interrupts the run and returns Home without submitting it**; there is no silent pause. Do not switch tabs during a competition run.
@@ -105,8 +105,8 @@ Ranks sort by score descending, tie-break ascending, achieved timestamp ascendin
 
 1. Verify the correct Vercel Production environment, intended Neon database and `/api/health` live response.
 2. Log into `/admin` with the configured password. Signed HTTP-only, same-site cookies expire after eight hours. Every admin API read/write independently checks authorization; POSTs also require the same public origin. Admin login is rate-limited. A hashed-IP, database-backed limit allows generous public traffic from shared school Wi-Fi.
-3. Export the four boards separately to CSV if needed. CSV cells escape quotes and spreadsheet formula prefixes.
-4. Remove an abusive name with the per-row confirmation, or select a game and type **`RESET REACTION`**, **`RESET MEMORY`**, **`RESET AIM`** or **`RESET TRIVIA`** before resetting it. Resets are permanent; export before removing wanted data.
+3. Export the three active boards separately to CSV if needed. CSV cells escape quotes and spreadsheet formula prefixes.
+4. Remove an abusive name with the per-row confirmation, or select a game and type **`RESET REACTION`**, **`RESET MEMORY`** or **`RESET AIM`** before resetting it. Resets are permanent; export before removing wanted data.
 5. Reset test scores in each intended board. Test the same-name/different-game and returning-player paths, and confirm a worse replay keeps the best.
 6. Test the actual public URL on the shared laptop and a phone, refresh from both devices, and check a redeployment does not erase the boards. Sign out of admin on the stand laptop.
 7. Create/print a QR code **only for the verified production URL** (or connected custom domain). No example URL or QR code in this repository claims to be a live event link.
@@ -115,7 +115,7 @@ Ranks sort by score descending, tie-break ascending, achieved timestamp ascendin
 ## Project map
 
 - `src/components/arcade.tsx`: home, selected leaderboard, nickname dialog, finish/retry/results.
-- `src/components/games.tsx`: the four real game controls and timers.
+- `src/components/games.tsx`: the three active game controls and timers, plus the retired quiz implementation.
 - `src/components/admin.tsx`: organizer login, moderation, export and reset.
 - `src/lib/games.ts`: editable game metadata and primary UI copy.
 - `src/lib/ui-copy.ts`: editable English interface labels and dynamic messages.
@@ -133,6 +133,6 @@ API paths: `GET /api/health`, `GET /api/leaderboard?gameId=…`, `POST /api/nick
 
 ## Verification boundary
 
-Verified locally on 2026-10-18: `npm run typecheck`, `npm run lint`, all **40 Vitest tests**, all **7 Playwright scenarios**, and `npm run build` passed. The compiled app also passed a local production-server smoke check for health, starting a game and quitting it. Browser checks included all four games, the complete fifteen-question quiz without answer feedback, and the three specified viewport sizes. The supplied SVG matches the original file unchanged, and the private trivia bank was absent from the browser's static chunks.
+Verified locally on 2026-10-20: `npm run typecheck`, `npm run lint`, all **40 Vitest tests**, all **8 Playwright scenarios**, and `npm run build` passed. Browser checks covered all three active games, the desktop/mobile layouts, rejected retired quiz URLs/APIs and recovery from a pending retired quiz. These checks exercise local demo data; they do not verify the live deployment.
 
 Local automated checks and browser verification can validate this repository and demo flows. Live Neon provisioning, live migration execution, persistence across Vercel cold starts/redeployments, a real GitHub deploy button and two-device production acceptance require the real external accounts/database. These are not represented as completed by local tests.

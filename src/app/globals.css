@@ -348,6 +348,9 @@ input {
   grid-template-columns: 1fr 1fr;
   gap: 17px;
 }
+.game-card.aim:last-child {
+  grid-column: 1 / -1;
+}
 .game-card {
   background: white;
   border: 1px solid var(--line);
@@ -639,7 +642,7 @@ input {
 }
 .board-tabs {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
   gap: 0;
