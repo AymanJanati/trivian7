@@ -25,6 +25,7 @@ import {
 } from "@/lib/games";
 import { credentials, request, RequestError } from "@/lib/client";
 import { normalizeName } from "@/lib/nickname";
+import { NewGame } from "./new-games";
 import { Reaction, Memory, Aim } from "./games";
 type Pending = { session: GameSession; data: unknown };
 const PENDING = "n7arcade:pending";
@@ -73,7 +74,15 @@ function Preview({ game }: { game: GameId }) {
         <span className="tiny-target">+</span>
       </div>
     );
-  return null;
+  return (
+    <div className={`card-preview new-preview ${game}`}>
+      <b>{games[game].symbol}</b>
+      <span>
+        LEVEL UP ↗<br />
+        {games[game].label}
+      </span>
+    </div>
+  );
 }
 function TagDialog({
   game,
@@ -93,6 +102,9 @@ function TagDialog({
   useEffect(() => {
     const node = dialog.current;
     node?.showModal();
+    try {
+      setName(localStorage.getItem("n7arcade:tag") || "");
+    } catch {}
     input.current?.focus();
     return () => node?.close();
   }, []);
@@ -213,7 +225,8 @@ function TagDialog({
               required
             />
             <span className="fine-print">
-              {ui.label216CharactersMakeItYours}
+              {ui.label216CharactersMakeItYours} · Use the same tag in all six
+              games for Ultra Score. Tags are claimed on trust.
             </span>
             <button className="button blue full" disabled={busy} type="submit">
               {busy ? <Loader2 className="spin" /> : ui.letSPlay}
@@ -262,6 +275,68 @@ export default function Arcade({
     finished = useRef(false),
     selectedRef = useRef(selected),
     [quitOpen, setQuitOpen] = useState(false);
+  const [ultra, setUltra] = useState<{
+    displayName: string;
+    score: number;
+  } | null>(null);
+  const [ultraError, setUltraError] = useState(false);
+  const [storyProgress, setStoryProgress] = useState(0),
+    [storyPaused, setStoryPaused] = useState(false);
+  const storyStart = useRef(0),
+    manualUntil = useRef(0);
+  const chooseBoard = useCallback((id: GameId) => {
+    setSelected(id);
+    storyStart.current = Date.now();
+    manualUntil.current = Date.now() + 12000;
+    setStoryProgress(0);
+  }, []);
+  useEffect(() => {
+    storyStart.current = Date.now();
+    if (screen !== "home" || storyPaused) return;
+    const timer = setInterval(() => {
+      const time = Date.now();
+      if (time < manualUntil.current) {
+        storyStart.current = time;
+        return;
+      }
+      const progress = (time - storyStart.current) / 6000;
+      setStoryProgress(Math.min(1, progress));
+      if (progress >= 1) {
+        setSelected(
+          (id) =>
+            ACTIVE_GAME_IDS[
+              (ACTIVE_GAME_IDS.indexOf(id as (typeof ACTIVE_GAME_IDS)[number]) +
+                1) %
+                ACTIVE_GAME_IDS.length
+            ],
+        );
+        storyStart.current = time;
+      }
+    }, 100);
+    return () => clearInterval(timer);
+  }, [screen, storyPaused]);
+  useEffect(() => {
+    let active = true;
+    const update = () =>
+      request<{ leader: { displayName: string; score: number } | null }>(
+        "ultra",
+      )
+        .then((data) => {
+          if (active) {
+            setUltra(data.leader);
+            setUltraError(false);
+          }
+        })
+        .catch(() => {
+          if (active) setUltraError(true);
+        });
+    void update();
+    const timer = setInterval(() => void update(), 15000);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [screen]);
   selectedRef.current = selected;
   const refresh = useCallback(async () => {
     const game = selectedRef.current;
@@ -383,6 +458,9 @@ export default function Arcade({
   }, [screen, quit]);
   const start = (value: GameSession) => {
     setTag(null);
+    try {
+      localStorage.setItem("n7arcade:tag", value.displayName);
+    } catch {}
     setSession(value);
     finished.current = false;
     setResult(null);
@@ -392,7 +470,14 @@ export default function Arcade({
   };
   const Game =
     session && isActiveGame(session.gameId)
-      ? { reaction: Reaction, memory: Memory, aim: Aim }[session.gameId]
+      ? {
+          reaction: Reaction,
+          memory: Memory,
+          aim: Aim,
+          color: NewGame,
+          numbers: NewGame,
+          rhythm: NewGame,
+        }[session.gameId]
       : null;
   return (
     <div className="site-shell">
@@ -405,6 +490,24 @@ export default function Arcade({
             <span className="brand-slash">{"//"}</span>
           </span>
         </Link>
+        <div
+          className="ultra-leader"
+          title="Sum of personal bests under the same tag. Complete all six games to qualify. Tags are claimed on trust."
+        >
+          <span>🏆 ULTRA {ultra ? "LEADER" : "SCORE"}</span>
+          <b>
+            {ultraError
+              ? "BOARD OFFLINE"
+              : ultra?.displayName || "THE TITLE IS OPEN"}
+          </b>
+          <small>
+            {ultraError
+              ? "Retrying…"
+              : ultra
+                ? ultra.score.toLocaleString() + " / 6,000"
+                : "COMPLETE ALL 6 GAMES"}
+          </small>
+        </div>
         <div className="masthead-right">
           <span className="edition">
             <i /> {ui.clubsWeekIntegrationEdition}
@@ -481,7 +584,7 @@ export default function Arcade({
             <div className="challenges">
               <div className="section-heading">
                 <h2>
-                  <span>01—03</span> {ui.chooseYourChallenge}
+                  <span>01—06</span> {ui.chooseYourChallenge}
                 </h2>
                 <span>{ui.oneGameOneBoard}</span>
               </div>
@@ -506,7 +609,7 @@ export default function Arcade({
                         <div className="card-actions">
                           <button
                             className="rank-action"
-                            onClick={() => setSelected(id)}
+                            onClick={() => chooseBoard(id)}
                             aria-label={dynamicCopy.viewRanks(games[id].name)}
                           >
                             {ui.ranks}
@@ -514,7 +617,7 @@ export default function Arcade({
                           <button
                             className="play-button"
                             onClick={() => {
-                              setSelected(id);
+                              chooseBoard(id);
                               setTag(id);
                             }}
                             aria-label={dynamicCopy.playGame(games[id].name)}
@@ -551,6 +654,30 @@ export default function Arcade({
                         : ui.connecting}
                 </span>
               </div>
+              <div className="story-controls">
+                <div className="story-progress" aria-hidden="true">
+                  {ACTIVE_GAME_IDS.map((id) => (
+                    <i key={id}>
+                      <b
+                        style={{
+                          width:
+                            selected === id ? storyProgress * 100 + "%" : "0%",
+                        }}
+                      />
+                    </i>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setStoryPaused((v) => !v)}
+                  aria-label={
+                    storyPaused
+                      ? "Resume leaderboard rotation"
+                      : "Pause leaderboard rotation"
+                  }
+                >
+                  {storyPaused ? "▶" : "Ⅱ"}
+                </button>
+              </div>
               <div
                 className="board-tabs"
                 role="tablist"
@@ -563,7 +690,7 @@ export default function Arcade({
                     aria-controls="board-panel"
                     id={`tab-${id}`}
                     key={id}
-                    onClick={() => setSelected(id)}
+                    onClick={() => chooseBoard(id)}
                   >
                     {games[id].label}
                   </button>
@@ -803,7 +930,7 @@ export default function Arcade({
           © {new Date().getFullYear()} {ui.n7geeks2}
           <span className="footer-blue">{"//"}</span> {ui.madeOfCuriosity}
         </span>
-        <span>{ui.threeChallengesThreeIndependentBoards}</span>
+        <span>{ui.sixChallengesOneUltraLeader}</span>
         <a href="/admin">
           {ui.organizerAccess}
           <ArrowUpRight size={12} />

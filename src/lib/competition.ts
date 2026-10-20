@@ -1,5 +1,10 @@
 import "server-only";
 import {
+  generateChallenges,
+  challengeData,
+  challengeScore,
+} from "./new-challenges";
+import {
   createHash,
   randomBytes,
   randomUUID,
@@ -93,6 +98,8 @@ export async function startGame(game: GameId, raw: string, returning: boolean) {
       finishedAt: null,
       data: { returningEntryId: entry?.id, rulesVersion: RULES_VERSION[game] },
     };
+    if (["color", "numbers", "rhythm"].includes(game))
+      session.data.challenges = generateChallenges(game);
     if (game === "memory") session.data.sequences = generateMemorySequences();
     if (game === "trivia") {
       session.data.questions = chooseQuestions();
@@ -105,6 +112,18 @@ export async function startGame(game: GameId, raw: string, returning: boolean) {
       token,
       gameId: game,
       displayName: name.displayName,
+      ...(session.data.challenges
+        ? {
+            challenges: session.data.challenges.map((c) => ({
+              prompt: c.prompt,
+              options: c.options,
+              ink: c.ink,
+              limitMs: c.limitMs,
+              at: c.at,
+              lane: c.lane,
+            })),
+          }
+        : {}),
       ...(game === "memory" ? { sequences: session.data.sequences } : {}),
     };
   });
@@ -204,8 +223,9 @@ export async function finishGame(
     const duration = Date.now() - Date.parse(session.createdAt);
     let score: { score: number; tiebreakMs: number };
     try {
-      score =
-        game === "reaction"
+      score = ["color", "numbers", "rhythm"].includes(game)
+        ? challengeScore(game, raw, session.data.challenges!)
+        : game === "reaction"
           ? reactionScore(reactionData.parse(raw))
           : game === "memory"
             ? memoryScore(memoryData.parse(raw), session.data.sequences!)
@@ -226,6 +246,11 @@ export async function finishGame(
     if (game === "aim" && aimData.parse(raw).elapsedMs > duration + 1000)
       throw new ApiError(400, "Run timing exceeds session duration.");
     if (game === "memory" && memoryData.parse(raw).elapsedMs > duration + 1000)
+      throw new ApiError(400, "Run timing exceeds session duration.");
+    if (
+      ["color", "numbers", "rhythm"].includes(game) &&
+      challengeData.parse(raw).elapsedMs > duration + 1000
+    )
       throw new ApiError(400, "Run timing exceeds session duration.");
     const name = rename
       ? normalizeName(rename)

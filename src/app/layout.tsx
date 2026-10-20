@@ -8,7 +8,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "N7GEEKS // ARCADE",
   description:
-    "Pick a challenge. Own the board. Three playable challenges from N7Geeks: reaction, memory and aim.",
+    "Pick a challenge. Own the board. Six playable challenges from N7Geeks: reaction, memory, aim, Color Clash, Number Rush and Rhythm Grid.",
   robots: { index: true, follow: true },
 };
 export default function RootLayout({

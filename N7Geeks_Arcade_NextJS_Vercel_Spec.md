@@ -1,3 +1,5 @@
+> Update 2026-10-20: Add Color Clash, Number Rush and Rhythm Grid with increasing difficulty. Six active games now use rotating story-style leaderboards with manual selection and pause. The header Ultra Score sums same-tag personal bests across all six games (6,000 maximum), requiring completion of all six. Geek Check remains retired. See README.md for current rules.
+
 > Update 2026-10-20: Geek Check is retired. The arcade now offers Reaction, Memory and Aim only. Hide its game and leaderboard controls, reject public trivia play routes/API requests, and preserve historical database records. This supersedes earlier four-game requirements below.
 
 # N7GEEKS // ARCADE

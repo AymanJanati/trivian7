@@ -16,6 +16,7 @@ export interface SessionData {
   returningEntryId?: string;
   rulesVersion?: number;
   sequences?: number[][];
+  challenges?: import("@/lib/new-challenges").Challenge[];
   questions?: Question[];
   answers?: {
     correct: boolean;
@@ -65,7 +66,7 @@ export const entries = pgTable(
     ),
     check(
       "entry_game",
-      sql`${t.gameId} in ('reaction','memory','aim','trivia')`,
+      sql`${t.gameId} in ('reaction','memory','aim','color','numbers','rhythm','trivia')`,
     ),
     check("entry_score", sql`${t.bestScore} between 0 and 1000`),
   ],
@@ -99,7 +100,7 @@ export const sessions = pgTable(
     index("session_game_expiry").on(t.gameId, t.expiresAt),
     check(
       "session_game",
-      sql`${t.gameId} in ('reaction','memory','aim','trivia')`,
+      sql`${t.gameId} in ('reaction','memory','aim','color','numbers','rhythm','trivia')`,
     ),
     check(
       "session_state",
@@ -131,7 +132,7 @@ export const attempts = pgTable(
     check("attempt_score", sql`${t.score} between 0 and 1000`),
     check(
       "attempt_game_check",
-      sql`${t.gameId} in ('reaction','memory','aim','trivia')`,
+      sql`${t.gameId} in ('reaction','memory','aim','color','numbers','rhythm','trivia')`,
     ),
   ],
 );

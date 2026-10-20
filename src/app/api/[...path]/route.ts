@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { createHash } from "node:crypto";
+import { ultraRankings } from "@/lib/ultra";
 import { ACTIVE_GAME_IDS, GAME_IDS } from "@/lib/games";
 import { nameSchema } from "@/lib/nickname";
 import { ConfigurationError, environment } from "@/lib/env";
@@ -82,6 +83,14 @@ async function handler(
         mode: env.demo ? "demo" : "live",
         database: env.demo ? "local-memory" : "neon",
       });
+    }
+    if (path === "ultra" && req.method === "GET") {
+      const boards = await Promise.all(
+        ACTIVE_GAME_IDS.map((game) =>
+          transaction(game, (repo) => repo.board()),
+        ),
+      );
+      return json({ leader: ultraRankings(boards)[0] ?? null, maximum: 6000 });
     }
     if (path === "leaderboard" && req.method === "GET") {
       const game = activeGameSchema.parse(

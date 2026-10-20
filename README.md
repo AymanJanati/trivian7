@@ -1,6 +1,6 @@
 # N7GEEKS // ARCADE
 
-Three independent competitions, one full-stack Next.js application. Pick **REACTION.EXE**, **MEMORY.STACK**, or **AIM//TRAINER**. Each game has its own nickname namespace, personal best and leaderboard. There is no aggregate score.
+Six independent competitions, one full-stack Next.js application. Pick **REACTION.EXE**, **MEMORY.STACK**, **AIM//TRAINER**, **COLOR.CLASH**, **NUMBER.RUSH** or **RHYTHM.GRID**. Each game has its own nickname namespace, personal best and leaderboard. Ultra Score combines each player’s personal best across all six games.
 
 Built with Next.js App Router, React, TypeScript, Tailwind, original CSS/SVG graphics, the supplied N7Geeks logo, Drizzle and Neon PostgreSQL. All `/api` endpoints deploy alongside the UI in one Vercel project. Fonts are packaged locally; gameplay needs no external trivia, image or AI service.
 
@@ -38,7 +38,7 @@ npm run test:e2e
 npm run build
 ```
 
-Playwright covers desktop (1366×768 and 1920×1080), mobile (375×812), the tag dialog and focus, all three games, retired-game URL/API rejection, keyboard/pointer input, automatic result return, retries across refresh, admin access and cross-site request rejection. `PLAYWRIGHT_EXECUTABLE_PATH` can point to an existing compatible Chromium executable. Browser artifacts and screenshots are written to ignored `test-results/`.
+Playwright covers desktop (1366×768 and 1920×1080), mobile (375×812), the tag dialog and focus, all six games, stories rotation/manual controls, retired-game URL/API rejection, keyboard/pointer input, automatic result return, retries across refresh, admin access and cross-site request rejection. `PLAYWRIGHT_EXECUTABLE_PATH` can point to an existing compatible Chromium executable. Browser artifacts and screenshots are written to ignored `test-results/`.
 
 Vitest covers the four exact scoring algorithms, nickname normalization, independent namespaces, collisions/retries, concurrent idempotent finishes, best-score preservation, reset isolation, server quiz grading, cookie signing/expiry and production configuration safeguards. Those repository tests use the local in-memory transaction implementation. They do **not** establish that cloud credentials, Neon connectivity or an actual deployment work.
 
@@ -88,9 +88,20 @@ Finishing atomically saves the attempt, updates a better personal best, incremen
 
 Ranks sort by score descending, tie-break ascending, achieved timestamp ascending and normalized name deterministically. Incomplete Aim tie-breaks use misses; completed runs use completion milliseconds. Memory uses the time of the last successfully completed round. Public responses omit identity IDs, tokens, answer keys and admin data. Scoreboards use `Cache-Control: no-store` and poll every ten seconds on Home.
 
+## Six games, rotating boards and Ultra Score
+
+- Color Clash: 20 fresh rounds, congruent warmups then conflicting word/ink colors. Deadlines shrink from 2.2 seconds to 775 ms. Each correct round earns up to 50 points, mostly for accuracy with a small speed bonus.
+- Number Rush: 20 generated problems progress through addition, subtraction (including negatives), multiplication and parenthesized expressions. Deadlines shrink from five seconds to 1.96 seconds; each round earns up to 50 points.
+- Rhythm Grid: 60 notes across four lanes. Intervals shrink from 850 ms to 378 ms, and hit windows tighten from ±180 ms to ±121 ms. Timing accuracy determines points; missed notes earn zero and stray taps cost points. D/F/J/K, 1–4 and touch are supported. Visual timing works with sound off.
+- Every new game uses session-specific challenges. The server retains the challenge keys and recomputes the score from validated ordered events, with a session-duration check. Browser events retain the same casual-competition trust boundary as the original games.
+- Boards rotate every six seconds. Six progress segments, direct game tabs and a pause/resume button provide manual control. Selecting a board gives a reading pause before rotation resumes.
+- Ultra Score sums current-format personal bests across **all six active games**, up to **6,000**. Only players with six completed boards qualify. Highest total wins, then earliest completion of those personal bests, then display name. Retired Trivia scores are excluded. The header refreshes every 15 seconds and after a completed run.
+- Player identity uses the existing normalized tag shared across games, with the last tag remembered in this browser for convenience. Players must use the same tag everywhere. This remains a trust-based booth identity, not authenticated ownership. Scores still live in Neon in production.
+- Migration 0002 only widens the allowed game IDs on existing tables. Vercel applies it through the existing build migration step, preserving prior scores. All six games appear in organizer controls and CSV exports.
+
 ## Timing, identity and interruption rules
 
-Geek Check was retired on 2026-10-20. It is absent from the arcade and organizer tabs, and public play URLs and APIs reject it. Historical database records and internal grading code remain intact; no data migration or reset is needed. Organizer API exports remain available for historical data. Pending unsaved quiz runs in browser storage are discarded so returning visitors can play the remaining games.
+Geek Check was retired on 2026-10-20; Color Clash, Number Rush and Rhythm Grid now bring the active roster to six. It is absent from the arcade and organizer tabs, and public play URLs and APIs reject it. Historical database records and internal grading code remain intact; no data migration or reset is needed. Organizer API exports remain available for historical data. Pending unsaved quiz runs in browser storage are discarded so returning visitors can play the remaining games.
 
 - **Memory (format 2):** ten independent sequences of 3–12 tiles. Each round gets a fresh pattern, never the previous opening or an immediate repeated tile. Flashes accelerate from 450 ms to 180 ms, with gaps narrowing from 160 ms to 97 ms. Input windows last at least six seconds (1.8 seconds per tile for longer rounds), with a visible input countdown and a two-minute overall ceiling. Completed-round awards are **30, 40, 50, 60, 80, 100, 120, 140, 170, 210**, totaling 1,000. A wrong tile or expired window ends the run; partial rounds earn nothing.
 - Rules are centralized in `src/lib/rules.ts`. Memory uses version 2, Trivia uses version 3, and Reaction and Aim remain version 1. The non-destructive second migration retains earlier scores and separates boards by format. Older records remain in the database, excluded from current rankings, nickname checks and admin resets/exports. Trivia's new mix starts a separate board without deleting format-2 records. Reload any page already mid-run before the update; old-format pending runs cannot enter the new board.
@@ -105,7 +116,7 @@ Geek Check was retired on 2026-10-20. It is absent from the arcade and organizer
 
 1. Verify the correct Vercel Production environment, intended Neon database and `/api/health` live response.
 2. Log into `/admin` with the configured password. Signed HTTP-only, same-site cookies expire after eight hours. Every admin API read/write independently checks authorization; POSTs also require the same public origin. Admin login is rate-limited. A hashed-IP, database-backed limit allows generous public traffic from shared school Wi-Fi.
-3. Export the three active boards separately to CSV if needed. CSV cells escape quotes and spreadsheet formula prefixes.
+3. Export the six active boards separately to CSV if needed. CSV cells escape quotes and spreadsheet formula prefixes.
 4. Remove an abusive name with the per-row confirmation, or select a game and type **`RESET REACTION`**, **`RESET MEMORY`** or **`RESET AIM`** before resetting it. Resets are permanent; export before removing wanted data.
 5. Reset test scores in each intended board. Test the same-name/different-game and returning-player paths, and confirm a worse replay keeps the best.
 6. Test the actual public URL on the shared laptop and a phone, refresh from both devices, and check a redeployment does not erase the boards. Sign out of admin on the stand laptop.
@@ -115,7 +126,7 @@ Geek Check was retired on 2026-10-20. It is absent from the arcade and organizer
 ## Project map
 
 - `src/components/arcade.tsx`: home, selected leaderboard, nickname dialog, finish/retry/results.
-- `src/components/games.tsx`: the three active game controls and timers, plus the retired quiz implementation.
+- `src/components/games.tsx`: the original game controls and timers, plus the retired quiz implementation. New games live in `src/components/new-games.tsx`.
 - `src/components/admin.tsx`: organizer login, moderation, export and reset.
 - `src/lib/games.ts`: editable game metadata and primary UI copy.
 - `src/lib/ui-copy.ts`: editable English interface labels and dynamic messages.
@@ -133,6 +144,6 @@ API paths: `GET /api/health`, `GET /api/leaderboard?gameId=…`, `POST /api/nick
 
 ## Verification boundary
 
-Verified locally on 2026-10-20: `npm run typecheck`, `npm run lint`, all **40 Vitest tests**, all **8 Playwright scenarios**, and `npm run build` passed. Browser checks covered all three active games, the desktop/mobile layouts, rejected retired quiz URLs/APIs and recovery from a pending retired quiz. These checks exercise local demo data; they do not verify the live deployment.
+Verified locally on 2026-10-20: `npm run typecheck`, `npm run lint`, all **47 Vitest tests**, all **12 Playwright scenarios**, and `npm run build` passed. Browser checks covered all six active games, the desktop/mobile layouts, stories rotation/manual reading pause, rejected retired quiz URLs/APIs and recovery from a pending retired quiz. These checks exercise local demo data; they do not verify the live deployment.
 
 Local automated checks and browser verification can validate this repository and demo flows. Live Neon provisioning, live migration execution, persistence across Vercel cold starts/redeployments, a real GitHub deploy button and two-device production acceptance require the real external accounts/database. These are not represented as completed by local tests.

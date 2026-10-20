@@ -15,6 +15,13 @@
       "when": 1792344106072,
       "tag": "0001_new_kylun",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792533380835,
+      "tag": "0002_parallel_makkari",
+      "breakpoints": true
     }
   ]
 }

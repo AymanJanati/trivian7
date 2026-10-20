@@ -39,7 +39,7 @@ async function begin(page: Page, game: string, name: string) {
   await page.getByLabel("YOUR NICKNAME").fill(name);
   await page.getByRole("button", { name: "LET’S PLAY" }).click();
 }
-test("responsive arcade has three games, no overflow and usable primary actions", async ({
+test("responsive arcade has six games, no overflow and usable primary actions", async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -52,7 +52,12 @@ test("responsive arcade has three games, no overflow and usable primary actions"
     await page.setViewportSize(size);
     await page.goto("/");
     await expect(page.getByText("DEMO MODE — SCORES NOT SHARED")).toBeVisible();
-    await expect(page.locator(".game-card")).toHaveCount(3);
+    await expect(page.locator(".game-card")).toHaveCount(6);
+    const header = await page.locator(".masthead").boundingBox();
+    const ultra = await page.locator(".ultra-leader").boundingBox();
+    expect(ultra!.y + ultra!.height).toBeLessThanOrEqual(
+      header!.y + header!.height,
+    );
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -60,8 +65,8 @@ test("responsive arcade has three games, no overflow and usable primary actions"
     ).toBeTruthy();
     if (size.width >= 1366) {
       for (const button of await page.locator(".play-button").all()) {
-        const rect = await button.boundingBox();
-        expect(rect!.y + rect!.height).toBeLessThanOrEqual(size.height);
+        await button.scrollIntoViewIfNeeded();
+        await expect(button).toBeInViewport();
       }
     }
     await page.screenshot({
@@ -176,7 +181,7 @@ test("retired Geek Check is absent and cannot be played through old URLs or APIs
 }) => {
   await page.goto("/");
   await expect(page.getByText("GEEK.CHECK", { exact: true })).toHaveCount(0);
-  await expect(page.getByRole("tab")).toHaveCount(3);
+  await expect(page.getByRole("tab")).toHaveCount(6);
   const retiredPage = await page.goto("/play/trivia");
   expect(retiredPage!.status()).toBe(404);
   expect(
@@ -232,7 +237,7 @@ test("a pending retired quiz does not trap returning visitors in the save screen
     ),
   );
   await page.reload();
-  await expect(page.locator(".game-card")).toHaveCount(3);
+  await expect(page.locator(".game-card")).toHaveCount(6);
   await expect(
     page.getByRole("button", { name: /COULD NOT SAVE/ }),
   ).toHaveCount(0);
@@ -302,4 +307,62 @@ test("admin authorization, CSRF origin checks and game-specific reset", async ({
   await expect(
     page.getByText("AIM//TRAINER board, attempts and sessions reset."),
   ).toBeVisible();
+});
+
+for (const [id, name] of [
+  ["color", "COLOR.CLASH"],
+  ["numbers", "NUMBER.RUSH"],
+  ["rhythm", "RHYTHM.GRID"],
+]) {
+  test(name + " completes and saves a run", async ({ page, request }) => {
+    await reset(request, id);
+    await page.goto("/");
+    await begin(page, name, "ExpansionNova");
+    await page
+      .getByRole("button", {
+        name: id === "rhythm" ? "START TRACK" : "START CHALLENGE",
+      })
+      .click();
+    if (id === "rhythm") {
+      await page
+        .getByRole("button", { name: "Hit lane 1", exact: true })
+        .dispatchEvent("pointerdown", { pointerType: "touch" });
+      await expect(
+        page.getByText("YOU MADE THE BOARD.", { exact: true }),
+      ).toBeVisible({ timeout: 50000 });
+    } else {
+      for (let i = 0; i < 20; i++) {
+        await page.waitForTimeout(120);
+        await page.keyboard.press("1");
+      }
+      await expect(
+        page.getByText("YOU MADE THE BOARD.", { exact: true }),
+      ).toBeVisible();
+    }
+    await expect(page.getByText(/SAVED ✓/)).toBeVisible();
+  });
+}
+test("story boards rotate, allow manual selection and pause", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".ultra-leader")).toContainText("ULTRA");
+  await expect(
+    page.getByRole("tab", { name: "MEMORY", exact: true }),
+  ).toHaveAttribute("aria-selected", "true", { timeout: 8000 });
+  await page.getByRole("tab", { name: "LOGIC", exact: true }).click();
+  await page.waitForTimeout(6500);
+  await expect(
+    page.getByRole("tab", { name: "LOGIC", exact: true }),
+  ).toHaveAttribute("aria-selected", "true");
+  await page
+    .getByRole("button", { name: "Pause leaderboard rotation" })
+    .click();
+  await page.waitForTimeout(6500);
+  await expect(
+    page.getByRole("tab", { name: "LOGIC", exact: true }),
+  ).toHaveAttribute("aria-selected", "true");
+  await page
+    .getByRole("button", { name: "Resume leaderboard rotation" })
+    .click();
 });

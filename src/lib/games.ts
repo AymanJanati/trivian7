@@ -1,7 +1,22 @@
-export const GAME_IDS = ["reaction", "memory", "aim", "trivia"] as const;
+export const GAME_IDS = [
+  "reaction",
+  "memory",
+  "aim",
+  "color",
+  "numbers",
+  "rhythm",
+  "trivia",
+] as const;
 export type GameId = (typeof GAME_IDS)[number];
 // Keep historical IDs for stored results and organizer exports.
-export const ACTIVE_GAME_IDS = ["reaction", "memory", "aim"] as const;
+export const ACTIVE_GAME_IDS = [
+  "reaction",
+  "memory",
+  "aim",
+  "color",
+  "numbers",
+  "rhythm",
+] as const;
 export type ActiveGameId = (typeof ACTIVE_GAME_IDS)[number];
 export function isActiveGame(value: string): value is ActiveGameId {
   return ACTIVE_GAME_IDS.some((id) => id === value);
@@ -42,6 +57,42 @@ export const games = {
       "Hit twenty targets before thirty seconds run out. Speed earns a bonus. Empty clicks cost time.",
     control: "MOUSE / TOUCH",
     symbol: "◎",
+  },
+  color: {
+    name: "COLOR.CLASH",
+    label: "FOCUS",
+    jp: "集中",
+    number: "04",
+    description: "Read the ink. Ignore the word. Stay focused.",
+    duration: "~30 SEC",
+    instruction:
+      "20 rounds. Choose the INK color, not the word. Deadlines shrink as distractions increase. Keys 1–4 or tap.",
+    control: "KEYS 1–4 / TAP",
+    symbol: "Aa",
+  },
+  numbers: {
+    name: "NUMBER.RUSH",
+    label: "LOGIC",
+    jp: "計算",
+    number: "05",
+    description: "Quick maths. Bigger problems. Beat the clock.",
+    duration: "~1 MIN",
+    instruction:
+      "20 fresh problems. Choose the answer before time runs out. Operations get harder and deadlines shrink. Keys 1–4 or tap.",
+    control: "KEYS 1–4 / TAP",
+    symbol: "±",
+  },
+  rhythm: {
+    name: "RHYTHM.GRID",
+    label: "TIMING",
+    jp: "律動",
+    number: "06",
+    description: "Four lanes. Find the beat. Keep your streak.",
+    duration: "~40 SEC",
+    instruction:
+      "Hit each lane as its note crosses the blue line. Patterns accelerate and timing windows tighten. Use D F J K, keys 1–4 or tap. Visual timing works with sound off.",
+    control: "D F J K / KEYS 1–4 / TAP",
+    symbol: "♫",
   },
   trivia: {
     name: "GEEK.CHECK",
@@ -99,11 +150,12 @@ export interface GameSession {
   gameId: GameId;
   displayName: string;
   sequences?: number[][];
+  challenges?: import("./new-challenges").PublicChallenge[];
 }
 export const copy = {
   title: "PICK A CHALLENGE.",
   titleAccent: "OWN THE BOARD.",
-  tagline: "Three ways to show up. One chance to stand out.",
+  tagline: "Six ways to show up. One chance to stand out.",
   emptyBoard: "NO SCORES YET. BE THE FIRST.",
   tagTitle: "ENTER YOUR TAG",
   existingTitle: "TAG ALREADY ON THIS BOARD",

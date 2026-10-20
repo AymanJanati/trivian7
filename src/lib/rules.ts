@@ -6,6 +6,9 @@ export const RULES_VERSION: Record<GameId, number> = {
   memory: 2,
   aim: 1,
   trivia: 3,
+  color: 1,
+  numbers: 1,
+  rhythm: 1,
 };
 export const MEMORY_LIMIT_MS = 120_000;
 export const MEMORY_LEAD_MS = 600;
