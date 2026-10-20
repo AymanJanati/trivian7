@@ -225,8 +225,8 @@ function TagDialog({
               required
             />
             <span className="fine-print">
-              {ui.label216CharactersMakeItYours} · Use the same tag in all six
-              games for Ultra Score. Tags are claimed on trust.
+              {ui.label216CharactersMakeItYours} · Use the same tag in every
+              game you play for Ultra Score. Tags are claimed on trust.
             </span>
             <button className="button blue full" disabled={busy} type="submit">
               {busy ? <Loader2 className="spin" /> : ui.letSPlay}
@@ -492,7 +492,7 @@ export default function Arcade({
         </Link>
         <div
           className="ultra-leader"
-          title="Sum of personal bests under the same tag. Complete all six games to qualify. Tags are claimed on trust."
+          title="Sum of personal bests under the same tag. Every player qualifies after playing any game. Tags are claimed on trust."
         >
           <span>🏆 ULTRA {ultra ? "LEADER" : "SCORE"}</span>
           <b>
@@ -505,7 +505,7 @@ export default function Arcade({
               ? "Retrying…"
               : ultra
                 ? ultra.score.toLocaleString() + " / 6,000"
-                : "COMPLETE ALL 6 GAMES"}
+                : "PLAY ANY GAME TO START"}
           </small>
         </div>
         <div className="masthead-right">

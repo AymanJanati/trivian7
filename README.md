@@ -1,6 +1,6 @@
 # N7GEEKS // ARCADE
 
-Six independent competitions, one full-stack Next.js application. Pick **REACTION.EXE**, **MEMORY.STACK**, **AIM//TRAINER**, **COLOR.CLASH**, **NUMBER.RUSH** or **RHYTHM.GRID**. Each game has its own nickname namespace, personal best and leaderboard. Ultra Score combines each player’s personal best across all six games.
+Six independent competitions, one full-stack Next.js application. Pick **REACTION.EXE**, **MEMORY.STACK**, **AIM//TRAINER**, **COLOR.CLASH**, **NUMBER.RUSH** or **RHYTHM.GRID**. Each game has its own nickname namespace, personal best and leaderboard. Ultra Score combines each player’s personal best in every game they have played.
 
 Built with Next.js App Router, React, TypeScript, Tailwind, original CSS/SVG graphics, the supplied N7Geeks logo, Drizzle and Neon PostgreSQL. All `/api` endpoints deploy alongside the UI in one Vercel project. Fonts are packaged locally; gameplay needs no external trivia, image or AI service.
 
@@ -95,7 +95,7 @@ Ranks sort by score descending, tie-break ascending, achieved timestamp ascendin
 - Rhythm Grid: 60 notes across four lanes. Intervals shrink from 850 ms to 378 ms, and hit windows tighten from ±180 ms to ±121 ms. Timing accuracy determines points; missed notes earn zero and stray taps cost points. D/F/J/K, 1–4 and touch are supported. Visual timing works with sound off.
 - Every new game uses session-specific challenges. The server retains the challenge keys and recomputes the score from validated ordered events, with a session-duration check. Browser events retain the same casual-competition trust boundary as the original games.
 - Boards rotate every six seconds. Six progress segments, direct game tabs and a pause/resume button provide manual control. Selecting a board gives a reading pause before rotation resumes.
-- Ultra Score sums current-format personal bests across **all six active games**, up to **6,000**. Only players with six completed boards qualify. Highest total wins, then earliest completion of those personal bests, then display name. Retired Trivia scores are excluded. The header refreshes every 15 seconds and after a completed run.
+- Ultra Score sums current-format personal bests from the active games each person has played, up to **6,000**. Everyone qualifies after one completed game; unplayed games contribute zero. Highest total wins, then earliest completion of those personal bests, then display name. Retired Trivia scores are excluded. The header refreshes every 15 seconds and after a completed run.
 - Player identity uses the existing normalized tag shared across games, with the last tag remembered in this browser for convenience. Players must use the same tag everywhere. This remains a trust-based booth identity, not authenticated ownership. Scores still live in Neon in production.
 - Migration 0002 only widens the allowed game IDs on existing tables. Vercel applies it through the existing build migration step, preserving prior scores. All six games appear in organizer controls and CSV exports.
 

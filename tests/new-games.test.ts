@@ -105,7 +105,7 @@ describe("new challenge scoring", () => {
     },
   );
 });
-it("Ultra requires all six games, combines normalized tags and excludes retired scores", () => {
+it("Ultra totals played games, combines normalized tags and excludes retired scores", () => {
   const boards = ACTIVE_GAME_IDS.map(
     (game, i) =>
       [
@@ -118,7 +118,25 @@ it("Ultra requires all six games, combines normalized tags and excludes retired 
         },
       ] as Entry[],
   );
-  expect(ultraRankings(boards.slice(1))).toEqual([]);
+  expect(ultraRankings(boards.slice(1))[0]).toMatchObject({
+    score: 4500,
+    played: 5,
+  });
+  expect(ultraRankings(boards.slice(0, 1))[0]).toMatchObject({
+    score: 900,
+    played: 1,
+  });
+  const rival = [
+    {
+      ...boards[0][0],
+      normalizedName: "rival",
+      displayName: "Rival",
+      bestScore: 1000,
+    },
+  ];
+  expect(ultraRankings([boards[0], rival])[0].displayName).toBe("Rival");
+  expect(ultraRankings([boards[0], boards[1], rival])[0].score).toBe(1800);
+  expect(ultraRankings([])).toEqual([]);
   expect(
     ultraRankings([
       ...boards,

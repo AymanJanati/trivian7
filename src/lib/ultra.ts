@@ -1,5 +1,5 @@
 import type { Entry } from "./games";
-import { ACTIVE_GAME_IDS, isActiveGame } from "./games";
+import { isActiveGame } from "./games";
 
 export function ultraRankings(boards: Entry[][]) {
   const players = new Map<
@@ -20,12 +20,10 @@ export function ultraRankings(boards: Entry[][]) {
       if (row.bestAchievedAt > p.achievedAt) p.achievedAt = row.bestAchievedAt;
       players.set(row.normalizedName, p);
     }
-  return [...players.values()]
-    .filter((p) => p.played === ACTIVE_GAME_IDS.length)
-    .sort(
-      (a, b) =>
-        b.score - a.score ||
-        a.achievedAt.localeCompare(b.achievedAt) ||
-        a.displayName.localeCompare(b.displayName),
-    );
+  return [...players.values()].sort(
+    (a, b) =>
+      b.score - a.score ||
+      a.achievedAt.localeCompare(b.achievedAt) ||
+      a.displayName.localeCompare(b.displayName),
+  );
 }
